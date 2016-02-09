@@ -49,11 +49,13 @@ class JsonToExcelConverter {
             fileList = [file]
         }
 
+        int count = 0
         for (f in fileList) {
             def data = getData(f, f.absolutePath)
             if (!data) {
                 continue;
             }
+            count++
             def relationships = data.relationships.findAll {
                 return it.type == "plan"
             }
@@ -86,6 +88,8 @@ class JsonToExcelConverter {
             }
             row += size
         }
+        sheet.addRowPageBreak(row + 2)
+        sheet.addCell(new Label(0, row + 4, "Total file processed: $count", headerFormat))
         workbook.write()
         workbook.close()
     }
