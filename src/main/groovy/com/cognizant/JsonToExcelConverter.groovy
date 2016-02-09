@@ -5,6 +5,7 @@ import jxl.format.VerticalAlignment
 import jxl.write.Label
 import jxl.write.WritableCellFormat
 import jxl.write.WritableFont
+import org.apache.commons.io.FileUtils
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -41,43 +42,50 @@ class JsonToExcelConverter {
 
         File file = new File(location)
         int row = 1
+        def fileList
         if (file.isDirectory()) {
-            file.listFiles().each { f ->
-                def data = getData(f)
-                def relationships = data.relationships.findAll {
-                    return it.type == "plan"
-                }
-
-                def size = relationships.size()
-
-                (0..11).each {
-                    sheet.mergeCells(it, row, it, row+size-1)
-                }
-
-                sheet.addCell(new Label(0, row, data.sku.code, verticalFormat))
-                sheet.addCell(new Label(1, row, data.brand, verticalFormat))
-                sheet.addCell(new Label(2, row, data.model, verticalFormat))
-                sheet.addCell(new Label(3, row, data.channelPermissions.ConsumerNew, verticalFormat))
-                sheet.addCell(new Label(4, row, data.channelPermissions.ConsumerUpgrade, verticalFormat))
-                sheet.addCell(new Label(5, row, data.channelPermissions.VoiceNew, verticalFormat))
-                sheet.addCell(new Label(6, row, data.channelPermissions.VoiceUpgrade, verticalFormat))
-                sheet.addCell(new Label(7, row, getResult(data.stockLimited), verticalFormat))
-                sheet.addCell(new Label(8, row, data.rrp, verticalFormat))
-                sheet.addCell(new Label(9, row, data.replacementCost, verticalFormat))
-                sheet.addCell(new Label(10, row, getResult(data.replacementCost == data.rrp), verticalFormat))
-                sheet.addCell(new Label(11, row, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalFormat))
-
-                relationships.eachWithIndex { it, index ->
-                    sheet.addCell(new Label(12, index + row, it.type))
-                    sheet.addCell(new Label(13, index + row, it.id))
-                    sheet.addCell(new Label(14, index + row, it.prices.oneOff.toString()))
-                    sheet.addCell(new Label(15, index + row, it.prices[0].monthly ? it.prices.monthly.toString():"NA"))
-                    sheet.addCell(new Label(16, index + row, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims"))
-                }
-                row += size
-            }
+             fileList = FileUtils.listFiles(file, ["json"] as String[], true)
+        } else {
+            fileList = [file]
         }
 
+        for (f in fileList) {
+            def data = getData(f, f.absolutePath)
+            if (!data) {
+                continue;
+            }
+            def relationships = data.relationships.findAll {
+                return it.type == "plan"
+            }
+
+            def size = relationships.size()
+
+            (0..11).each {
+                sheet.mergeCells(it, row, it, row + size - 1)
+            }
+
+            sheet.addCell(new Label(0, row, data.sku.code, verticalFormat))
+            sheet.addCell(new Label(1, row, data.brand, verticalFormat))
+            sheet.addCell(new Label(2, row, data.model, verticalFormat))
+            sheet.addCell(new Label(3, row, data.channelPermissions.ConsumerNew, verticalFormat))
+            sheet.addCell(new Label(4, row, data.channelPermissions.ConsumerUpgrade, verticalFormat))
+            sheet.addCell(new Label(5, row, data.channelPermissions.VoiceNew, verticalFormat))
+            sheet.addCell(new Label(6, row, data.channelPermissions.VoiceUpgrade, verticalFormat))
+            sheet.addCell(new Label(7, row, getResult(data.stockLimited), verticalFormat))
+            sheet.addCell(new Label(8, row, data.rrp, verticalFormat))
+            sheet.addCell(new Label(9, row, data.replacementCost, verticalFormat))
+            sheet.addCell(new Label(10, row, getResult(data.replacementCost == data.rrp), verticalFormat))
+            sheet.addCell(new Label(11, row, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalFormat))
+
+            relationships.eachWithIndex { it, index ->
+                sheet.addCell(new Label(12, index + row, it.type))
+                sheet.addCell(new Label(13, index + row, it.id))
+                sheet.addCell(new Label(14, index + row, it.prices.oneOff.toString()))
+                sheet.addCell(new Label(15, index + row, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"))
+                sheet.addCell(new Label(16, index + row, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims"))
+            }
+            row += size
+        }
         workbook.write()
         workbook.close()
     }
@@ -90,7 +98,7 @@ class JsonToExcelConverter {
         }
     }
 
-    static Object getData(dataFile) {
+    static Object getData(File dataFile, String filePath) {
         def reader = new FileReader(dataFile)
         Map savedStrings = [:]
 
@@ -119,7 +127,13 @@ class JsonToExcelConverter {
 
         string = string.replaceAll("\ufeff", "")
 
-        new JsonSlurper().parseText(string)
+        def jsonObject = null
+        try {
+            jsonObject = new JsonSlurper().parseText(string)
+        } catch (Exception e) {
+            println "unable to parse json file: " + filePath
+        }
+        jsonObject
     }
 
     private static String getResult(data) {
