@@ -32,7 +32,7 @@ class JsonToExcelConverter {
         def workbook = createWorkbook(new File(workbookFilename))
         def sheet = workbook.createSheet('Report Worksheet', 0)
 
-        def header = ["SKU", "Brand", "Model", "Consumer New", "Consumer Upgrade", "Voice New", "Voice Upgrade", "Stock limited",
+        def header = ["SKU", "Brand", "Model", "Consumer New", "Consumer Upgrade", "Voice New", "Voice Upgrade", "Stock limited","Life Cycle",
                       "RRP", "Replacement cost", "Is RRP & RCost equal", "Is listHalf present",
                       "Relationship type", "Id/path", "Price one-off", "Price monthly", "Is Price & RRP equal"]
 
@@ -74,17 +74,18 @@ class JsonToExcelConverter {
             sheet.addCell(new Label(5, row, data.channelPermissions.VoiceNew, verticalFormat))
             sheet.addCell(new Label(6, row, data.channelPermissions.VoiceUpgrade, verticalFormat))
             sheet.addCell(new Label(7, row, getResult(data.stockLimited), verticalFormat))
-            sheet.addCell(new Label(8, row, data.rrp, verticalFormat))
-            sheet.addCell(new Label(9, row, data.replacementCost, verticalFormat))
-            sheet.addCell(new Label(10, row, getResult(data.replacementCost == data.rrp), verticalFormat))
-            sheet.addCell(new Label(11, row, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalFormat))
+            sheet.addCell(new Label(8, row, data.lifecycle.status, verticalFormat))
+            sheet.addCell(new Label(9, row, data.rrp, verticalFormat))
+            sheet.addCell(new Label(10, row, data.replacementCost, verticalFormat))
+            sheet.addCell(new Label(11, row, getResult(data.replacementCost == data.rrp), verticalFormat))
+            sheet.addCell(new Label(12, row, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalFormat))
 
             relationships.eachWithIndex { it, index ->
-                sheet.addCell(new Label(12, index + row, it.type))
-                sheet.addCell(new Label(13, index + row, it.id))
-                sheet.addCell(new Label(14, index + row, it.prices.oneOff.toString()))
-                sheet.addCell(new Label(15, index + row, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"))
-                sheet.addCell(new Label(16, index + row, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims"))
+                sheet.addCell(new Label(13, index + row, it.type))
+                sheet.addCell(new Label(14, index + row, it.id))
+                sheet.addCell(new Label(15, index + row, it.prices.oneOff.toString()))
+                sheet.addCell(new Label(16, index + row, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"))
+                sheet.addCell(new Label(17, index + row, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims"))
             }
             row += size
         }
