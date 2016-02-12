@@ -1,20 +1,11 @@
 package com.cognizant
 
-import groovy.json.JsonSlurper
-import jxl.format.VerticalAlignment
-import jxl.write.Label
-import jxl.write.WritableCellFormat
-import jxl.write.WritableFont
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
-
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 import static com.cognizant.Cell.newCell
 import static com.cognizant.ExcelFormat.headerFormat
 import static com.cognizant.ExcelFormat.verticalCenterFormat
-import static jxl.Workbook.createWorkbook
 
 /**
  * Created by guptav on 31/01/16.
@@ -42,7 +33,6 @@ class JsonToExcelConverter {
         logger.info("Start processing json files")
         excelWriter.writeHeaders(headers, headerFormat)
 
-        int row = 1
         int count = 1
         def files = getFiles(path)
 
