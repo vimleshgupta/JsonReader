@@ -1,5 +1,7 @@
 package com.cognizant
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
 import groovy.json.JsonBuilder
 import jxl.Sheet
 import jxl.Workbook
@@ -22,7 +24,6 @@ class JsonUpdater {
 
         def rows = getAllRows(sheet)
 
-        def skuMap = [:]
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
@@ -30,10 +31,10 @@ class JsonUpdater {
                 it.sku == data.sku.code
             }
             if (row) {
-                data.costToO2 = row.costToO2
-                data.cashPrice = row.cashPrice
-                data.rrp = row.rrpnreplacement
-                data.replacementCost = row.rrpnreplacement
+                data.costToO2 = row.costToO2 as String
+                data.cashPrice = row.cashPrice as String
+                data.rrp = row.rrpnreplacement as String
+                data.replacementCost = row.rrpnreplacement as String
 
                 row.plans.each { plan ->
                     def relationship = data.relationships.find {
@@ -63,16 +64,19 @@ class JsonUpdater {
                         }
                     }
                 }
+                ObjectMapper stringMapper = new ObjectMapper( new Factory())
+                stringMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
+                StringWriter result = new StringWriter()
+                stringMapper.writeValue(result, data)
+                def jsonData = result.toString()
 
-                JsonBuilder jsonBuilder = new JsonBuilder(data)
-                def updatedDataString = jsonBuilder.toPrettyString()
-
-                savedStrings.each {
-                    updatedDataString = updatedDataString.replace(it.key, it.value)
+                savedStrings.each {String key, String value ->
+                    String replaceString = key
+                    jsonData = jsonData.replace(replaceString, value)
                 }
 
-                file.withWriter {Writer writer->
-                    writer.write(updatedDataString)
+                file.withWriter { Writer writer ->
+                    writer.write(jsonData)
                 }
 
             }
