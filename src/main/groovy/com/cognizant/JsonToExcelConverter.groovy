@@ -3,7 +3,7 @@ package com.cognizant
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 
-import static com.cognizant.Cell.newCell
+import static ExcelCell.newCell
 import static com.cognizant.ExcelFormat.headerFormat
 import static com.cognizant.ExcelFormat.verticalCenterFormat
 

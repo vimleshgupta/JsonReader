@@ -1,1 +1,3 @@
 rootProject.name = 'JsonReader'
+include 'JsonUpdater'
+

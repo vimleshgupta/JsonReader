@@ -30,7 +30,7 @@ class ExcelWriter {
         rowIndex++
     }
 
-    def writeNotes(Cell cell) {
+    def writeNotes(ExcelCell cell) {
         sheet.addRowPageBreak(rowIndex)
         sheet.addCell(new Label(cell.colIndex, rowIndex + 2, cell.data, cell.format))
         rowIndex += 2
