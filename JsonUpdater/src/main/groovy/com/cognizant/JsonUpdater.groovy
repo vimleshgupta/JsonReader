@@ -14,7 +14,7 @@ class JsonUpdater {
 
     public static void main(String[] args) {
 
-        Workbook workbook = Workbook.getWorkbook(new File(JsonUpdater.getClass().getResource("/pricingsheet.xls").file))
+        Workbook workbook = Workbook.getWorkbook(new File(args[1]))
 
         // /home/guptav/projects/o2/productCatalogueData_Master/catalogueData/device
 
