@@ -85,6 +85,7 @@ class JsonUpdater {
                 break
             }
         }
+        println("Success!!!")
     }
 
     static getAllRows(Sheet sheet) {
