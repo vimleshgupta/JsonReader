@@ -42,25 +42,19 @@ class JsonUpdater {
                     }
 
                     if (plan.oneoff != "NA" && plan.monthly != "NA") {
-                        relationship.prices = []
                         def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
                         def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
                         oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices << [
-                                    oneOff : it as String,
-                                    monthly : monthlyPrices[index] as String
-                            ]
+                            relationship.prices[index].oneOff = it as String
+                            relationship.prices[index].monthly = monthlyPrices[index] as String
                         }
 
                     }
 
                     if (plan.oneoff != "NA" && plan.monthly == "NA") {
-                        relationship.prices = []
                         def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
                         oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices << [
-                                    oneOff : it
-                            ]
+                            relationship.prices[index].oneOff = it as String
                         }
                     }
                 }
