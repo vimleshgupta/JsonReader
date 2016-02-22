@@ -2,7 +2,6 @@ package com.cognizant
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import groovy.json.JsonBuilder
 import jxl.Sheet
 import jxl.Workbook
 import org.apache.commons.io.FileUtils
@@ -27,6 +26,9 @@ class JsonUpdater {
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
+            if (!data.sku) {
+                continue
+            }
             def row = rows.find {
                 it.sku == data.sku.code
             }
@@ -73,6 +75,8 @@ class JsonUpdater {
                     writer.write(jsonData)
                 }
 
+            } else {
+                continue
             }
             rows.remove(row)
             if (rows.empty) {
