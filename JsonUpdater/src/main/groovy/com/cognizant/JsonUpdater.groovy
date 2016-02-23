@@ -23,7 +23,7 @@ class JsonUpdater {
 
         def rows = getAllRows(sheet)
 
-        for (file in lists) {
+        lists.each { file ->
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
             if (!data.sku) {
@@ -38,7 +38,10 @@ class JsonUpdater {
                 data.rrp = row.rrpnreplacement as String
                 data.replacementCost = row.rrpnreplacement as String
 
-                row.plans.each { plan ->
+                for (plan in row.plans) {
+                    if (plan.oneoff == "NA" && plan.monthly == "NA") {
+                        continue
+                    }
                     def relationship = data.relationships.find {
                         it.type == "plan" && it.id == plan.plan
                     }
@@ -69,13 +72,13 @@ class JsonUpdater {
                         }
                     }
                 }
-                ObjectMapper stringMapper = new ObjectMapper( new Factory())
+                ObjectMapper stringMapper = new ObjectMapper(new groovy.util.Factory())
                 stringMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
                 StringWriter result = new StringWriter()
                 stringMapper.writeValue(result, data)
                 def jsonData = result.toString()
 
-                savedStrings.each {String key, String value ->
+                savedStrings.each { String key, String value ->
                     String replaceString = key
                     jsonData = jsonData.replace(replaceString, value)
                 }
@@ -107,7 +110,7 @@ class JsonUpdater {
         for (def i = 1; i < sheet.rows ; i++) {
             def sku = [:]
             sku.plans = []
-            (0..3).each { column ->
+            (1..3).each { column ->
                 sku."${headers[column]}" = "${sheet.getCell(column, i).contents}"
             }
             while ((i < sheet.rows && sheet.getCell(4, i).contents != "")){
