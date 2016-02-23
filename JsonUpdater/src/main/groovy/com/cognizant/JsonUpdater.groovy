@@ -23,7 +23,7 @@ class JsonUpdater {
 
         def rows = getAllRows(sheet)
 
-        lists.each { file ->
+        for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
             if (!data.sku) {
@@ -38,15 +38,12 @@ class JsonUpdater {
                 data.rrp = row.rrpnreplacement as String
                 data.replacementCost = row.rrpnreplacement as String
 
-                for (plan in row.plans) {
-                    if (plan.oneoff == "NA" && plan.monthly == "NA") {
-                        continue
-                    }
+                row.plans.each { plan ->
                     def relationship = data.relationships.find {
                         it.type == "plan" && it.id == plan.plan
                     }
 
-                    if (!relationship) {
+                    if (!relationship && plan.oneoff != "NA" && plan.monthly != "NA") {
                         println "$plan not found in json file - $file.absolutePath"
                     } else {
                         try {
@@ -72,13 +69,13 @@ class JsonUpdater {
                         }
                     }
                 }
-                ObjectMapper stringMapper = new ObjectMapper(new groovy.util.Factory())
+                ObjectMapper stringMapper = new ObjectMapper( new Factory())
                 stringMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
                 StringWriter result = new StringWriter()
                 stringMapper.writeValue(result, data)
                 def jsonData = result.toString()
 
-                savedStrings.each { String key, String value ->
+                savedStrings.each {String key, String value ->
                     String replaceString = key
                     jsonData = jsonData.replace(replaceString, value)
                 }
