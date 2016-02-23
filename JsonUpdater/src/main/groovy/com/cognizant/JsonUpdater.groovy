@@ -26,7 +26,7 @@ class JsonUpdater {
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
-            if (!data.sku) {
+            if (!data || !data.sku) {
                 continue
             }
             def row = rows.find {
