@@ -43,20 +43,29 @@ class JsonUpdater {
                         it.type == "plan" && it.id == plan.plan
                     }
 
-                    if (plan.oneoff != "NA" && plan.monthly != "NA") {
-                        def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
-                        def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
-                        oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices[index].oneOff = it as String
-                            relationship.prices[index].monthly = monthlyPrices[index] as String
-                        }
+                    if (!relationship) {
+                        println "$plan not found in json file - $file.absolutePath"
+                    } else {
+                        try {
+                            if (plan.oneoff != "NA" && plan.monthly != "NA") {
+                                def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                                def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
+                                oneOffPrices.eachWithIndex { it, index ->
+                                    relationship.prices[index].oneOff = it as String
+                                    relationship.prices[index].monthly = monthlyPrices[index] as String
+                                }
 
-                    }
+                            }
 
-                    if (plan.oneoff != "NA" && plan.monthly == "NA") {
-                        def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
-                        oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices[index].oneOff = it as String
+                            if (plan.oneoff != "NA" && plan.monthly == "NA") {
+                                def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                                oneOffPrices.eachWithIndex { it, index ->
+                                    relationship.prices[index].oneOff = it as String
+                                }
+                            }
+                        } catch (Exception ex) {
+                            println "found exception while updating plan - $plan"
+                            ex.printStackTrace()
                         }
                     }
                 }
