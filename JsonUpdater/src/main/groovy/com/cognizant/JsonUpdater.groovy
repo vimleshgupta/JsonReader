@@ -23,17 +23,29 @@ class JsonUpdater {
 
         def rows = getAllRows(sheet)
 
-       // println "rows found - ${rows.sku}"
+        def newRows = [:]
+
+        rows.each { row ->
+            def skus = row.sku.split(",")
+            println skus
+            skus.each {
+                newRows.put(it, row)
+            }
+        }
+
+        println "rows found - ${newRows.size()}"
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
             if (!data || !data.sku) {
                 continue
             }
-            def row = rows.find {
-                it.sku == data.sku.code
+            def entry = newRows.find { key, value ->
+                key == data.sku.code
             }
-            if (row) {
+
+            if (entry) {
+                def row = entry.value
             //    println "sku - $data.sku found."
                 data.costToO2 = row.costToO2 as String
                 data.cashPrice = row.cashPrice as String
@@ -90,8 +102,8 @@ class JsonUpdater {
             } else {
                 continue
             }
-            rows.remove(row)
-            if (rows.empty) {
+            newRows.remove(entry)
+            if (newRows.isEmpty()) {
                 break
             }
         }
