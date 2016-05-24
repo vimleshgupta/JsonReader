@@ -23,6 +23,7 @@ class JsonUpdater {
 
         def rows = getAllRows(sheet)
 
+       // println "rows found - ${rows.sku}"
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
@@ -33,6 +34,7 @@ class JsonUpdater {
                 it.sku == data.sku.code
             }
             if (row) {
+            //    println "sku - $data.sku found."
                 data.costToO2 = row.costToO2 as String
                 data.cashPrice = row.cashPrice as String
                 data.rrp = row.rrpnreplacement as String
@@ -43,6 +45,7 @@ class JsonUpdater {
                         it.type == "plan" && it.id == plan.plan
                     }
 
+                  //  println "plan found - $plan.plan"
                     if (!relationship && plan.oneoff != "NA" && plan.monthly != "NA") {
                         println "$plan not found in json file - $file.absolutePath"
                     } else {
@@ -106,6 +109,7 @@ class JsonUpdater {
 
         for (def i = 1; i < sheet.rows ; i++) {
             def sku = [:]
+            sku.sku = sheet.getCell(0, i).contents
             sku.plans = []
             (1..3).each { column ->
                 sku."${headers[column]}" = "${sheet.getCell(column, i).contents}"

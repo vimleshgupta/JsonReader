@@ -19,9 +19,33 @@ class JsonToExcelConverter {
 
     final String workbookFileName = 'Report.xls'
     final String sheetName = 'Report Worksheet'
-    final List headers = ["ID","SKU", "Brand", "Model", "Consumer New", "Consumer Upgrade", "Voice New", "Voice Upgrade", "Stock Limited", "Life Cycle",
-                          "RRP", "Replacement cost", "Is RRP & RCost equal", "Is listHalf present",
-                          "Relationship type", "Id/path", "Price one-off", "Price monthly", "Is Price & RRP equal","ModelFamily"]
+    final List headers = [
+//            "ID",
+            "sku",
+          "Brand",
+           "Model",
+            "costToO2",
+            "cashPrice",
+            "rrpnreplacement",
+//            "ModelFamily",
+//            "Consumer New",
+//            "Consumer Upgrade",
+//            "Voice New",
+//            "Voice Upgrade",
+//            "Stock Limited",
+//            "Life Cycle",
+//            "RRP",
+//            "Replacement cost",
+//            "Is RRP & RCost equal",
+//            "Is listHalf present",
+//            "Relationship type",
+           // "productID",
+         //   "price",
+            "plan",
+            "oneoff",
+            "monthly",
+//            "Is Price & RRP equal"
+    ]
 
     JsonToExcelConverter(String path) {
         this.path = path
@@ -34,7 +58,7 @@ class JsonToExcelConverter {
         excelWriter.writeHeaders(headers, headerFormat)
 
         int count = 1
-        def files = getFiles(path)
+        def files = getFiles(path + "/device")
 
         for (file in files) {
             def data = JsonParser.parseJson(file, file.absolutePath)
@@ -50,36 +74,45 @@ class JsonToExcelConverter {
 
             def excelRows = [
                     mainRow : [
-                            newCell(0, data.id, verticalCenterFormat),
-                            newCell(1, data.sku.code, verticalCenterFormat),
-                            newCell(2, data.brand, verticalCenterFormat),
-                            newCell(3, data.model, verticalCenterFormat),
-                            newCell(4, data.channelPermissions.ConsumerNew, verticalCenterFormat),
-                            newCell(5, data.channelPermissions.ConsumerUpgrade, verticalCenterFormat),
-                            newCell(6, data.channelPermissions.VoiceNew, verticalCenterFormat),
-                            newCell(7, data.channelPermissions.VoiceUpgrade, verticalCenterFormat),
-                            newCell(8, getResult(data.stockLimited), verticalCenterFormat),
-                            newCell(9, data.lifecycle.status, verticalCenterFormat),
-                            newCell(10, data.rrp, verticalCenterFormat),
-                            newCell(11, data.replacementCost, verticalCenterFormat),
-                            newCell(12, getResult(data.replacementCost == data.rrp), verticalCenterFormat),
-                            newCell(13, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalCenterFormat),
-                            newCell(19, data.modelFamily, verticalCenterFormat),
+                         //   newCell(0, data.id, verticalCenterFormat),
+                            newCell(0, data.sku.code, verticalCenterFormat),
+                            newCell(1, data.brand, verticalCenterFormat),
+                            newCell(2, data.model, verticalCenterFormat),
+                            newCell(3, data.costToO2, verticalCenterFormat),
+                            newCell(4, data.cashPrice, verticalCenterFormat),
+                            newCell(5, data.rrp, verticalCenterFormat),
+
+//                            newCell(5, data.channelPermissions.ConsumerNew, verticalCenterFormat),
+//                            newCell(6, data.channelPermissions.ConsumerUpgrade, verticalCenterFormat),
+//                            newCell(7, data.channelPermissions.VoiceNew, verticalCenterFormat),
+//                            newCell(8, data.channelPermissions.VoiceUpgrade, verticalCenterFormat),
+//                            newCell(9, getResult(data.stockLimited), verticalCenterFormat),
+//                            newCell(10, data.lifecycle.status, verticalCenterFormat),
+//                            newCell(5, data.rrp, verticalCenterFormat),
+//                            newCell(6, data.replacementCost, verticalCenterFormat),
+//                            newCell(7, getResult(data.replacementCost == data.rrp), verticalCenterFormat),
+//                            newCell(8, data.id == data.leadModelInFamily ? getResult(data.images.standard.listHalf) : "Not a lead model in family", verticalCenterFormat)
                     ],
                     subRows : []
             ]
 
-            relationships.each {
-                def subRow = [
-                        newCell(14, it.type),
-                        newCell(15, it.id),
-                        newCell(16, it.prices.oneOff.toString()),
-                        newCell(17, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
-                        newCell(18, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
-                ]
-                excelRows.subRows << subRow
-            }
+            try {
+                relationships.each {
+                  //  def planDetails = getPlanDetails(it.id)
+                    def subRow = [
+                          //  newCell(4, planDetails.productID),
+                          //  newCell(5, planDetails.price),
+                            newCell(6, it.id),
+                            newCell(7, it.prices.oneOff.toString()),
+                            newCell(8, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
+                            //   newCell(9, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
+                    ]
+                    excelRows.subRows << subRow
+                }
 
+            } catch (FileNotFoundException e) {
+                println file.getAbsolutePath()
+            }
             excelWriter.writeEntireRows(excelRows)
         }
 
@@ -87,6 +120,16 @@ class JsonToExcelConverter {
         excelWriter.close()
 
         logger.info("End processing json files")
+    }
+
+    Map getPlanDetails(String planId) {
+        if (planId.startsWith("/plan")) {
+            File file = new File(path + "/" + planId)
+            Map data = JsonParser.parseJson(file, file.absolutePath)
+            [productID: data.productID, price: data.price?:data.topUpAmount]
+        } else {
+            [productID: "", price: ""]
+        }
     }
 
     File[] getFiles(String path) {

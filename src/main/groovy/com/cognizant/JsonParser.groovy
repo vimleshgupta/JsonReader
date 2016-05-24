@@ -31,6 +31,7 @@ public class JsonParser {
         while(matcher.find()) {
             def existingString = matcher.group(1)
             if (existingString.contains("idOf")) {
+                existingString = existingString.replaceAll(" ", "")
                 def newString = "\"" + existingString.substring(8, existingString.length() - 3) + "\""
                 data = data.replace(existingString, newString)
             } else {

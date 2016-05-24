@@ -55,7 +55,7 @@ class ExcelWriter {
     }
 
     void margeCells(int columns, int rowsForEachColumn) {
-        (0..columns-1).each {
+        (0..(columns-1)).each {
             sheet.mergeCells(it, rowIndex, it, rowIndex + rowsForEachColumn - 1)
         }
     }
