@@ -113,6 +113,7 @@ class JsonToExcelConverter {
             } catch (FileNotFoundException e) {
                 println file.getAbsolutePath()
             }
+         //   if (data.modelFamily == "iPhone 6s")
             excelWriter.writeEntireRows(excelRows)
         }
 
