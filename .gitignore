@@ -9,6 +9,7 @@ gradle-app.setting
 
 .idea
 *.log**
+*.~**
 *.iml
 *.ipr
 *.iws
