@@ -8,7 +8,7 @@ gradle-app.setting
 !gradle-wrapper.jar
 
 .idea
-log
+*.log**
 *.iml
 *.ipr
 *.iws
