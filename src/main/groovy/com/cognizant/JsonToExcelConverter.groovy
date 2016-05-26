@@ -103,8 +103,9 @@ class JsonToExcelConverter {
                           //  newCell(4, planDetails.productID),
                           //  newCell(5, planDetails.price),
                             newCell(6, it.id),
-                            newCell(7, it.prices.oneOff.toString().replaceAll(" ","")),
-                            newCell(8, it.prices[0] ? it.prices.monthly.toString().replaceAll(" ","") : "NA"),
+                            newCell(7, it.prices.oneOff.toString().replaceAll(" ", "")),
+                            newCell(8, it.prices[0].monthly ? it.prices.monthly.toString().replaceAll(" ", "") : "NA"),
+                          //  newCell(16, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
                             //   newCell(9, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
                     ]
                     excelRows.subRows << subRow
@@ -113,7 +114,8 @@ class JsonToExcelConverter {
             } catch (FileNotFoundException e) {
                 println file.getAbsolutePath()
             }
-         //   if (data.modelFamily == "iPhone 6s")
+         //   if (data.model.toLowerCase().contains("s6 edge 32gb"))
+            if(data.modelFamily == "Lumia 640")
             excelWriter.writeEntireRows(excelRows)
         }
 
