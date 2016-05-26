@@ -22,8 +22,8 @@ class JsonToExcelConverter {
     final List headers = [
 //            "ID",
             "sku",
-          "Brand",
-           "Model",
+         // "Brand",
+        //   "Model",
             "costToO2",
             "cashPrice",
             "rrpnreplacement",
@@ -76,11 +76,11 @@ class JsonToExcelConverter {
                     mainRow : [
                          //   newCell(0, data.id, verticalCenterFormat),
                             newCell(0, data.sku.code, verticalCenterFormat),
-                            newCell(1, data.brand, verticalCenterFormat),
-                            newCell(2, data.model, verticalCenterFormat),
-                            newCell(3, data.costToO2, verticalCenterFormat),
-                            newCell(4, data.cashPrice, verticalCenterFormat),
-                            newCell(5, data.rrp, verticalCenterFormat),
+                           // newCell(1, data.brand, verticalCenterFormat),
+                           // newCell(2, data.model, verticalCenterFormat),
+                            newCell(1, data.costToO2, verticalCenterFormat),
+                            newCell(2, data.cashPrice, verticalCenterFormat),
+                            newCell(3, data.rrp, verticalCenterFormat),
 
 //                            newCell(5, data.channelPermissions.ConsumerNew, verticalCenterFormat),
 //                            newCell(6, data.channelPermissions.ConsumerUpgrade, verticalCenterFormat),
@@ -102,9 +102,9 @@ class JsonToExcelConverter {
                     def subRow = [
                           //  newCell(4, planDetails.productID),
                           //  newCell(5, planDetails.price),
-                            newCell(6, it.id),
-                            newCell(7, it.prices.oneOff.toString().replaceAll(" ", "")),
-                            newCell(8, it.prices[0].monthly ? it.prices.monthly.toString().replaceAll(" ", "") : "NA"),
+                            newCell(4, it.id),
+                            newCell(5, it.prices.oneOff.toString().replaceAll(" ", "")),
+                            newCell(6, it.prices[0].monthly ? it.prices.monthly.toString().replaceAll(" ", "") : "NA"),
                           //  newCell(16, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
                             //   newCell(9, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
                     ]
@@ -115,7 +115,7 @@ class JsonToExcelConverter {
                 println file.getAbsolutePath()
             }
          //   if (data.model.toLowerCase().contains("s6 edge 32gb"))
-            if(data.modelFamily == "Lumia 640")
+            if(data.modelFamily == "Idol3")
             excelWriter.writeEntireRows(excelRows)
         }
 
