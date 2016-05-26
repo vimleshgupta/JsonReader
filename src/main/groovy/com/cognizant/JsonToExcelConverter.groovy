@@ -103,8 +103,8 @@ class JsonToExcelConverter {
                           //  newCell(4, planDetails.productID),
                           //  newCell(5, planDetails.price),
                             newCell(6, it.id),
-                            newCell(7, it.prices.oneOff.toString()),
-                            newCell(8, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
+                            newCell(7, it.prices.oneOff.toString().replaceAll(" ","")),
+                            newCell(8, it.prices[0] ? it.prices.monthly.toString().replaceAll(" ","") : "NA"),
                             //   newCell(9, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
                     ]
                     excelRows.subRows << subRow
