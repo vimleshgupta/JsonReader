@@ -115,13 +115,16 @@ class JsonUpdater {
         def rows = []
 
         def headers = []
-        (0..7).each { column ->
+        (0..sheet.columns-1).each { column ->
             headers << sheet.getCell(column, 0).contents
         }
 
         for (def i = 1; i < sheet.rows ; i++) {
             def sku = [:]
             sku.sku = sheet.getCell(0, i).contents
+            if (!sku.sku) {
+                continue
+            }
             sku.plans = []
             (1..3).each { column ->
                 sku."${headers[column]}" = "${sheet.getCell(column, i).contents}"

@@ -47,6 +47,7 @@ class ExcelWriter {
             }
         }
         rowIndex += rows.subRows.size()
+        rowIndex++
     }
 
     void close() {
