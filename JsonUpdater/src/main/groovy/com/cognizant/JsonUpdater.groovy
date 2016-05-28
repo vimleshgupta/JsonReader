@@ -13,11 +13,17 @@ class JsonUpdater {
 
     public static void main(String[] args) {
 
-        Workbook workbook = Workbook.getWorkbook(new File(args[1]))
-
         // /home/guptav/projects/o2/productCatalogueData_Master/catalogueData
 
+        if (args.length < 3) {
+            println "please provide 3 arguments"
+            println "1) Catalogue path 2) Updater sheet path 3) Update smartly"
+            return
+        }
+
         File[] lists = FileUtils.listFiles(new File(args[0]), ["json"] as String[], true)
+        Workbook workbook = Workbook.getWorkbook(new File(args[1]))
+        def updateSmartly = Boolean.getBoolean(args[2])
 
         Sheet sheet = workbook.getSheet(0)
 
@@ -52,16 +58,20 @@ class JsonUpdater {
                 data.rrp = row.rrpnreplacement as String
                 data.replacementCost = row.rrpnreplacement as String
 
-                def otherRelationship = data.relationships.findAll {
-                    it.type != "plan"
+                if (updateSmartly) {
+                    def otherRelationship = data.relationships.findAll {
+                        it.type != "plan"
+                    }
+                    def newOrUpdatedRelationship = []
+                    row.plans.each { plan ->
+                        newOrUpdatedRelationship << addOrUpdatePlans(plan, data, file, savedStrings)
+                    }
+                    data.relationships = newOrUpdatedRelationship + otherRelationship
+                } else {
+                    row.plans.each { plan ->
+                        updatedPlans(plan, data, file)
+                    }
                 }
-
-                def newOrUpdatedRelationship = []
-                row.plans.each { plan ->
-//                    updatedPlans(plan, data, file)
-                    newOrUpdatedRelationship << addOrUpdatePlans(plan, data, file, savedStrings)
-                }
-                data.relationships = newOrUpdatedRelationship + otherRelationship
 
                 ObjectMapper stringMapper = new ObjectMapper( new Factory())
                 stringMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
@@ -142,6 +152,7 @@ class JsonUpdater {
 
         //  println "plan found - $plan.plan"
         if (!relationship || (plan.oneoff == "NA" && plan.monthly == "NA")) {
+            println "$plan not found in json file - $file.absolutePath"
             return null
         } else {
             try {
