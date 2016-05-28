@@ -44,6 +44,7 @@ class JsonToExcelConverter {
             "plan",
             "oneoff",
             "monthly",
+            "defaultPrice"
 //            "Is Price & RRP equal"
     ]
 
@@ -105,6 +106,7 @@ class JsonToExcelConverter {
                             newCell(4, it.id),
                             newCell(5, it.prices.oneOff.toString().replaceAll(" ", "")),
                             newCell(6, it.prices[0].monthly ? it.prices.monthly.toString().replaceAll(" ", "") : "NA"),
+                            newCell(7, getDefaultPrice(it.prices)),
                           //  newCell(16, it.prices[0].monthly ? it.prices.monthly.toString() : "NA"),
                             //   newCell(9, it.id.contains("prepaySims") ? getResult(it.prices[0].oneOff == data.rrp) : "Not a prepay sims")
                     ]
@@ -114,8 +116,8 @@ class JsonToExcelConverter {
             } catch (FileNotFoundException e) {
                 println file.getAbsolutePath()
             }
-         //   if (data.model.toLowerCase().contains("s6 edge 32gb"))
-            if(data.modelFamily == "Idol3")
+        // if(data.model.toLowerCase().contains("iPhone 5s 16GB".toLowerCase()))
+            if(data.modelFamily == "G5")
             excelWriter.writeEntireRows(excelRows)
         }
 
@@ -123,6 +125,18 @@ class JsonToExcelConverter {
         excelWriter.close()
 
         logger.info("End processing json files")
+    }
+
+    String getDefaultPrice(List prices) {
+        def price = prices.find {
+            it.isDefault
+        }
+        if (price) {
+            def monthly = price.monthly ? ",$price.monthly" : ""
+            return "[${price.oneOff}${monthly}]"
+        } else {
+            ""
+        }
     }
 
     Map getPlanDetails(String planId) {

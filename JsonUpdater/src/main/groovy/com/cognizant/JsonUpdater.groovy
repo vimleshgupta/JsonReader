@@ -15,7 +15,7 @@ class JsonUpdater {
 
         Workbook workbook = Workbook.getWorkbook(new File(args[1]))
 
-        // /home/guptav/projects/o2/productCatalogueData_Master/catalogueData/device
+        // /home/guptav/projects/o2/productCatalogueData_Master/catalogueData
 
         File[] lists = FileUtils.listFiles(new File(args[0]), ["json"] as String[], true)
 
@@ -52,38 +52,17 @@ class JsonUpdater {
                 data.rrp = row.rrpnreplacement as String
                 data.replacementCost = row.rrpnreplacement as String
 
-                row.plans.each { plan ->
-                    def relationship = data.relationships.find {
-                        it.type == "plan" && it.id == plan.plan
-                    }
-
-                  //  println "plan found - $plan.plan"
-                    if (!relationship && plan.oneoff != "NA" && plan.monthly != "NA") {
-                        println "$plan not found in json file - $file.absolutePath"
-                    } else {
-                        try {
-                            if (plan.oneoff != "NA" && plan.monthly != "NA") {
-                                def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
-                                def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
-                                oneOffPrices.eachWithIndex { it, index ->
-                                    relationship.prices[index].oneOff = it as String
-                                    relationship.prices[index].monthly = monthlyPrices[index] as String
-                                }
-
-                            }
-
-                            if (plan.oneoff != "NA" && plan.monthly == "NA") {
-                                def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
-                                oneOffPrices.eachWithIndex { it, index ->
-                                    relationship.prices[index].oneOff = it as String
-                                }
-                            }
-                        } catch (Exception ex) {
-                            println "found exception while updating plan - $plan"
-                            ex.printStackTrace()
-                        }
-                    }
+                def otherRelationship = data.relationships.findAll {
+                    it.type != "plan"
                 }
+
+                def newOrUpdatedRelationship = []
+                row.plans.each { plan ->
+//                    updatedPlans(plan, data, file)
+                    newOrUpdatedRelationship << addOrUpdatePlans(plan, data, file, savedStrings)
+                }
+                data.relationships = newOrUpdatedRelationship + otherRelationship
+
                 ObjectMapper stringMapper = new ObjectMapper( new Factory())
                 stringMapper.configure(SerializationFeature.INDENT_OUTPUT, true)
                 StringWriter result = new StringWriter()
@@ -108,6 +87,107 @@ class JsonUpdater {
             }
         }
         println("Success!!!")
+    }
+
+    private static Map addOrUpdatePlans(def plan, def data, File file, def savedStrings) {
+
+        def updatedRelationship = updatedPlans(plan, data, file)
+        if (updatedRelationship) {
+            return updatedRelationship
+        } else {
+            println "added $plan in json file - $file.absolutePath"
+            def relationship = [
+                    type  : "plan",
+                    id    : plan.plan,
+                    prices: []
+            ]
+
+            savedStrings["\"$plan.plan\""] = "\${idOf('${relationship.id}')}"
+
+            try {
+                if (plan.oneoff != "NA" && plan.monthly != "NA") {
+                    def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                    def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
+                    oneOffPrices.eachWithIndex { it, index ->
+                        def oneoff = it as String
+                        def monthly = monthlyPrices[index] as String
+                        relationship.prices << [
+                                oneOff : (oneoff),
+                                monthly: (monthly)
+                        ]
+                    }
+                }
+
+                if (plan.oneoff != "NA" && plan.monthly == "NA") {
+                    def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                    oneOffPrices.eachWithIndex { it, index ->
+                        def oneoff = it as String
+                        relationship.prices << [
+                                oneOff : (oneoff)
+                        ]
+                    }
+                }
+            } catch (Exception ex) {
+                println "found exception while updating plan - $plan"
+                ex.printStackTrace()
+            }
+            return relationship
+        }
+    }
+
+    private static Map updatedPlans(def plan, def data, def file) {
+        def relationship = data.relationships.find {
+            it.type == "plan" && it.id == plan.plan
+        }
+
+        //  println "plan found - $plan.plan"
+        if (!relationship || (plan.oneoff == "NA" && plan.monthly == "NA")) {
+            return null
+        } else {
+            try {
+                if (plan.oneoff != "NA" && plan.monthly != "NA") {
+                    def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                    def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
+                    if (relationship.prices) {
+                        oneOffPrices.eachWithIndex { it, index ->
+                            relationship.prices[index].oneOff = it as String
+                            relationship.prices[index].monthly = monthlyPrices[index] as String
+                        }
+                    } else {
+                        relationship.prices = []
+                        oneOffPrices.eachWithIndex { it, index ->
+                            def oneoff = it as String
+                            def monthly = monthlyPrices[index] as String
+                            relationship.prices << [
+                                    oneOff : (oneoff),
+                                    monthly: (monthly)
+                            ]
+                        }
+                    }
+                }
+
+                if (plan.oneoff != "NA" && plan.monthly == "NA") {
+                    def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
+                    if (relationship.prices) {
+                        oneOffPrices.eachWithIndex { it, index ->
+                            relationship.prices[index].oneOff = it as String
+                        }
+                    } else {
+                        relationship.prices = []
+                        oneOffPrices.eachWithIndex { it, index ->
+                            def oneoff = it as String
+                            relationship.prices << [
+                                    oneOff: (oneoff)
+                            ]
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                println "found exception while updating plan - $plan"
+                ex.printStackTrace()
+            }
+        }
+        relationship
     }
 
     static getAllRows(Sheet sheet) {
