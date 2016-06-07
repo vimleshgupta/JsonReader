@@ -17,8 +17,8 @@ class JsonToExcelConverter {
     final ExcelWriter excelWriter
     final String path
 
-    final String workbookFileName = 'Report.xls'
-    final String sheetName = 'Report Worksheet'
+    final String workbookFileName = 'pricingsheet.xls'
+    final String sheetName = 'sheet1'
     final List headers = [
 //            "ID",
             "sku",
@@ -48,9 +48,9 @@ class JsonToExcelConverter {
 //            "Is Price & RRP equal"
     ]
 
-    JsonToExcelConverter(String path) {
+    JsonToExcelConverter(String path, String sheetPath) {
         this.path = path
-        this.excelWriter = new ExcelWriter(workbookFileName, sheetName)
+        this.excelWriter = new ExcelWriter(sheetPath, sheetName)
     }
 
     public void processJsonFeed() {
@@ -137,6 +137,7 @@ class JsonToExcelConverter {
         } else {
             ""
         }
+
     }
 
     Map getPlanDetails(String planId) {

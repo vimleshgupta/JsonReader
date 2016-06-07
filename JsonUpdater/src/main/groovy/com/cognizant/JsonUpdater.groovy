@@ -23,7 +23,7 @@ class JsonUpdater {
 
         File[] lists = FileUtils.listFiles(new File(args[0]), ["json"] as String[], true)
         Workbook workbook = Workbook.getWorkbook(new File(args[1]))
-        def updateSmartly = Boolean.getBoolean(args[2])
+        def updateSmartly = args[2].toBoolean()
 
         Sheet sheet = workbook.getSheet(0)
 
