@@ -117,7 +117,7 @@ class JsonToExcelConverter {
                 println file.getAbsolutePath()
             }
         // if(data.model.toLowerCase().contains("iPhone 5s 16GB".toLowerCase()))
-            if(data.modelFamily == "G5")
+            if(data.modelFamily == "G4")
             excelWriter.writeEntireRows(excelRows)
         }
 

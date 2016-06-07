@@ -21,7 +21,13 @@ class JsonUpdater {
             return
         }
 
-        File[] lists = FileUtils.listFiles(new File(args[0]), ["json"] as String[], true)
+        def devicePath = args[0] + "/device"
+        def dataAllowanceGroupsPath = args[0] + "/dataAllowanceGroups"
+
+        File[] lists = FileUtils.listFiles(new File(devicePath), ["json"] as String[], true)
+        File[] dataAllowanceFiles = FileUtils.listFiles(new File(dataAllowanceGroupsPath), ["json"] as String[], true)
+
+
         Workbook workbook = Workbook.getWorkbook(new File(args[1]))
         def updateSmartly = args[2].toBoolean()
 
@@ -38,8 +44,13 @@ class JsonUpdater {
                 newRows.put(it, row)
             }
         }
-
         println "rows found - ${newRows.size()}"
+
+        def dataAllowances = dataAllowanceFiles.collect { file ->
+            def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
+            data
+        }
+
         for (file in lists) {
             def (Map data, Map savedStrings) = JsonParser.parseJson(file, file.absolutePath)
 
@@ -65,6 +76,9 @@ class JsonUpdater {
                     def newOrUpdatedRelationship = []
                     row.plans.each { plan ->
                         newOrUpdatedRelationship << addOrUpdatePlans(plan, data, file, savedStrings)
+                        if (plan.defaultPrice) {
+                            data.ccaDefaultDataAllowanceId = getCcaDefaultDataAllowanceId(dataAllowances, data.subType, plan)
+                        }
                     }
                     data.relationships = newOrUpdatedRelationship + otherRelationship
                 } else {
@@ -99,6 +113,22 @@ class JsonUpdater {
         println("Success!!!")
     }
 
+    def static getCcaDefaultDataAllowanceId(List dataAllowances, String deviceSubType, Map plan) {
+        def dataAllowance = dataAllowances.find {
+            deviceSubType.equalsIgnoreCase(it.id)
+        }
+
+        def dataAllowanceMember = dataAllowance.members.find {
+            it.compatibleTariffsRestriction.find { planId ->
+                planId == plan.plan
+            }
+        }
+        if (!dataAllowanceMember) {
+            throw new Exception("plan not found in data allowance group - " + plan.plan)
+        }
+        dataAllowanceMember.id
+    }
+
     private static Map addOrUpdatePlans(def plan, def data, File file, def savedStrings) {
 
         def updatedRelationship = updatedPlans(plan, data, file)
@@ -121,10 +151,14 @@ class JsonUpdater {
                     oneOffPrices.eachWithIndex { it, index ->
                         def oneoff = it as String
                         def monthly = monthlyPrices[index] as String
-                        relationship.prices << [
+                        def price = [
                                 oneOff : (oneoff),
                                 monthly: (monthly)
                         ]
+                        if (plan.defaultPrice == "[$oneoff,$monthly]") {
+                            price.isDefault = true
+                        }
+                        relationship.prices << price
                     }
                 }
 
@@ -159,31 +193,24 @@ class JsonUpdater {
                 if (plan.oneoff != "NA" && plan.monthly != "NA") {
                     def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
                     def monthlyPrices = plan.monthly.substring(1, plan.monthly.length() - 1).split(",")
-                    if (relationship.prices) {
-                        oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices[index].oneOff = it as String
-                            relationship.prices[index].monthly = monthlyPrices[index] as String
-                        }
-                    } else {
                         relationship.prices = []
                         oneOffPrices.eachWithIndex { it, index ->
                             def oneoff = it as String
                             def monthly = monthlyPrices[index] as String
-                            relationship.prices << [
+                            def price = [
                                     oneOff : (oneoff),
                                     monthly: (monthly)
                             ]
+
+                            if (plan.defaultPrice == "[$oneoff,$monthly]") {
+                                price.isDefault = true
+                            }
+                            relationship.prices << price
                         }
-                    }
                 }
 
                 if (plan.oneoff != "NA" && plan.monthly == "NA") {
                     def oneOffPrices = plan.oneoff.substring(1, plan.oneoff.length() - 1).split(",")
-                    if (relationship.prices) {
-                        oneOffPrices.eachWithIndex { it, index ->
-                            relationship.prices[index].oneOff = it as String
-                        }
-                    } else {
                         relationship.prices = []
                         oneOffPrices.eachWithIndex { it, index ->
                             def oneoff = it as String
@@ -191,7 +218,6 @@ class JsonUpdater {
                                     oneOff: (oneoff)
                             ]
                         }
-                    }
                 }
             } catch (Exception ex) {
                 println "found exception while updating plan - $plan"
@@ -221,12 +247,23 @@ class JsonUpdater {
                 sku."${headers[column]}" = "${sheet.getCell(column, i).contents}"
             }
             while ((i < sheet.rows && sheet.getCell(4, i).contents != "")){
-                sku.plans << [
+                def plan = [
                         (headers[4]) : sheet.getCell(4, i).contents,
                         (headers[5]) : sheet.getCell(5, i).contents,
                         (headers[6]) : sheet.getCell(6, i).contents
                 ]
+                if (sheet.getCell(6, i).contents) {
+                    plan.(headers[7]) = sheet.getCell(7, i).contents
+                }
+                sku.plans << plan
                 i++
+            }
+
+            def plan = sku.plans.findAll {
+                it.(headers[7])
+            }
+            if (plan.size() > 1) {
+                throw new Exception("found two default prices for sku ($sku.sku) - " + plan.(headers[7]))
             }
             rows << sku
         }
